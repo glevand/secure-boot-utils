@@ -1,0 +1,3 @@
+[submodule "tdd-lib"]
+	path = tdd-lib
+	url = https://github.com/glevand/tdd--script-lib.git
