@@ -1,0 +1,190 @@
+#!/usr/bin/env bash
+#
+# @PACKAGE_NAME@
+# Version: @PACKAGE@-@PACKAGE_VERSION@
+# Project: @PACKAGE_URL@
+# Send bug reports to: @PACKAGE_BUGREPORT@
+#
+
+on_exit() {
+	local result=${1}
+
+	local sec="${SECONDS}"
+
+	if [[ -d "${tmp_dir:-}" ]]; then
+		if [[ ${keep_tmp_dir:-} ]]; then
+			echo "${script_name}: INFO: tmp dir preserved: '${tmp_dir}'" >&2
+		else
+			rm -rf "${tmp_dir:?}"
+		fi
+	fi
+
+	set +x
+	echo "${script_name}: Done: ${result}, ${sec} sec." >&2
+}
+
+on_err() {
+	local f_name=${1}
+	local line_no=${2}
+	local err_no=${3}
+
+	if [[ ${debug:-} ]]; then
+		echo '------------------------' >&2
+		set >&2
+		echo '------------------------' >&2
+	fi
+	echo "${script_name}: ERROR: (${err_no}) at ${f_name}:${line_no}." >&2
+	exit ${err_no}
+}
+
+check_in_files() {
+	local files=("${@}")
+
+	#echo "${FUNCNAME[0]}: count: ${#files[@]}" >&2
+	#echo "${FUNCNAME[0]}: files: @${files[@]}@" >&2
+
+	if [[ ${#files[@]} -eq 0 ]]; then
+		echo "${script_name}: ERROR: No input files given." >&2
+		usage
+		exit 1
+	fi
+
+	for ((i = 0; i < ${#files[@]}; i++)); do
+		if [[ -f "${files[i]}" ]]; then
+			if [[ ${verbose} ]]; then
+				echo "${FUNCNAME[0]}: [$((i + 1))] '${files[i]}' OK." >&2
+			fi
+		else
+			echo "${script_name}: ERROR: Bad input file: [$((i + 1))] '${files[i]}'." >&2
+			usage
+			exit 1
+		fi
+	done
+	if [[ ${verbose} ]]; then
+		echo "" >&2
+	fi
+	return 0
+}
+
+md5sum="${md5sum:-md5sum}"
+openssl="${openssl:-openssl}"
+sbsign="${sbsign:-sbsign}"
+sbverify="${sbverify:-sbverify}"
+sha256sum="${sha256sum:-sha256sum}"
+
+check_sb_progs() {
+	if ! check_progs " ${md5sum} ${openssl} ${sbsign} ${sbverify} ${sha256sum}"; then
+		exit 1
+	fi
+}
+
+print_cert_der() {
+	local cert=${1}
+
+	"${openssl}" x509 -in "${cert}" -inform der -text -noout
+}
+
+print_cert_pem() {
+	local cert=${1}
+
+	"${openssl}" x509 -in "${cert}" -text -noout
+}
+
+list_file_cert() {
+	local file=${1}
+
+	echo '=================='
+	"${sha256sum}" --tag "${file}"
+	echo '------------------'
+	"${sbverify}" --list "${file}"
+	echo '=================='
+}
+
+check_file_sig() {
+	local cert=${1}
+	local file=${2}
+
+	echo '=================='
+	"${sha256sum}" --tag "${cert}"
+	"${sha256sum}" --tag "${file}"
+	echo '------------------'
+	"${sbverify}" --cert "${cert}" "${file}"
+	echo '=================='
+}
+
+check_if_certificate() {
+	local cert=${1}
+
+	if ! openssl x509 -inform PEM -in "${cert}" -noout > /dev/null ; then
+		echo "${script_name}: ERROR: Bad certificate: '${cert}'." >&2
+		exit 1
+	fi
+}
+
+check_if_signing_key() {
+	local key=${1}
+
+	if ! openssl rsa -inform PEM -in "${key}" --check -noout > /dev/null ; then
+		echo "${script_name}: ERROR: Bad signing key: '${key}'." >&2
+		exit 1
+	fi
+}
+
+download_file() {
+	local out_file=${1}
+	local url=${2}
+	local sha256=${3}
+
+	wget "${url}" -O "${out_file}"
+
+	local check
+	check="$(sha256sum "${out_file}" | cut -f 1 -d ' ')"
+
+	if [[ "${check}" != "${sha256}" ]]; then
+		echo "${script_name}: ERROR: Bad download ${url}." >&2
+		exit 1
+	fi
+}
+
+download_cert() {
+	local out_prefix=${1}
+	local url=${2}
+	local sha256=${3}
+
+	echo "${script_name}: INFO: Downloading ${out_prefix##*/}." >&2
+	echo '' >&2
+
+	download_file "${out_prefix}.der" "${url}" "${sha256}"
+
+	openssl x509 -in "${out_prefix}.der" -inform DER -out "${out_prefix}.pem" -outform PEM
+	print_cert_der "${out_prefix}.der"
+}
+
+download_debian_sb() {
+	local key_store=${1}
+
+	download_cert \
+		"${key_store}/debian-secure-boot-ca" \
+		"https://dsa.debian.org/secure-boot-ca" \
+		"079646974bce09b1f04da67bd722d1fb0947ae4c4010bccdbba52d5b23cbf1a2"
+}
+
+download_ms_uefi_ca() {
+	local key_store=${1}
+
+	# FIXME: 403 Forbidden. Need 'wget --referer'???
+	download_cert \
+		"${key_store}/microsoft-uefica-public" \
+		"https://go.microsoft.com/fwlink/p/?linkid=321194" \
+		"48e99b991f57fc52f76149599bff0a58c47154229b9f8d603ac40d3500248507"
+}
+
+download_ms_3rd_party() {
+	local key_store=${1}
+
+	# FIXME: 403 Forbidden. Need 'wget --referer'???
+	download_cert \
+		"${key_store}/microsoft-3rd-party" \
+		"http://www.microsoft.com/pki/certs/MicCorThiParMarRoo_2010-10-05.crt" \
+		"2848361a9c1e32df1d3e2ed6a7b9e67a525cf8a13b164f8006c9479578f746de"
+}
