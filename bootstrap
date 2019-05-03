@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+script_name="${0##*/}"
+
+echo "${script_name}: '$(pwd)'"
+
+progs="autoconf automake make"
+for p in ${progs}; do
+	if ! test -x "$(command -v ${p})"; then
+		echo "${script_name}: ERROR: Please install '${p}'." >&2
+		result=1
+	fi
+done
+
+declare -A pairs=(
+	[libssl-dev]='/usr/include/openssl/evp.h'
+)
+for p in ${!pairs[@]}; do
+	if [[ ! -e "${pairs[${p}]}" ]]; then
+		echo "${script_name}: ERROR: '${pairs[${p}]}' not found, please install '${p}'." >&2
+		result=1
+	fi
+done
+
+if [[ ${result} ]]; then
+	exit 1
+fi
+
+mkdir -p m4
+exec autoreconf --force --install ${@}
