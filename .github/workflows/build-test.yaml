@@ -1,0 +1,26 @@
+name: SBU build and sign test
+
+on: workflow_dispatch
+
+jobs:
+
+  build:
+    name: SBU build and sign test
+    runs-on: ubuntu-latest
+    steps:
+      - name: install efitools
+        run: sudo apt install efitools
+
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+            submodules: recursive
+
+      - name: run build test
+        run: ./tests/build-test.sh .
+
+      - name: run combo loader test
+        run: ./tests/combo-loader-test.sh .
+
+      - name: run sign test
+        run: ./tests/sign-test.sh . ./test-out/combo-loader.efi
