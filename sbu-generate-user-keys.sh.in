@@ -16,12 +16,13 @@ usage () {
 		echo "  -v --verbose      - Verbose execution."
 		echo "  -g --debug        - Extra verbose execution."
 		echo 'Common X.509 Subject Attributes:'
-		echo '  CN = Common Name'
-		echo '  O  = Organization'
-		echo '  OU = Organizational Unit'
-		echo '  L  = Locality'
-		echo '  S  = State or Province Name'
-		echo '  C  = Country Name'
+		echo '  CN  = Common Name'
+		echo '  O   = Organization'
+		echo '  OU  = Organizational Unit'
+		echo '  L   = Locality'
+		echo '  S   = State or Province Name'
+		echo '  C   = Country Name'
+		echo '  UID = User ID'
 		echo "Info:"
 		echo '  @PACKAGE_NAME@ v@PACKAGE_VERSION@'
 		echo '  @PACKAGE_URL@'
@@ -98,9 +99,12 @@ generate_user_keys() {
 		for key in pk kek mok db; do
 			local keys_prefix="${keys_dir}/${key}"
 
+			local sub
+			sub="${subject//@key-name@/${key^^}-KEY}"
+
 			"${openssl}" req -new -x509 -newkey rsa:2048 \
 				-days 730 -nodes -sha256 \
-				-subj "${subject}/CN=${key^^}-KEY" \
+				-subj "${sub}" \
 				-keyout "${keys_prefix}_key.pem" \
 				-out "${keys_prefix}_cert.pem" 2>&1
 
@@ -251,7 +255,7 @@ source "${SCRIPTS_TOP}/tdd-lib/util.sh"
 
 force=''
 out_dir="/tmp/${base_name}-${start_time}"
-cert_subject="/O=Secure Boot Utils/OU=Boot Keys"
+cert_subject="/CN=@key-name@/UID=${start_time}/OU=Boot Keys/O=Secure Boot Utils"
 key_length="2048"
 usage=''
 verbose=''
