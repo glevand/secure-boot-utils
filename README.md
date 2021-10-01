@@ -222,8 +222,8 @@ Get the latest Debian net install ISO image:
 cd "${installer_root}"
 
 wget http://cdimage.debian.org/cdimage/release/current/amd64/iso-cd/debian-${deb_ver}-amd64-netinst.iso
-wget http://cdimage.debian.org/cdimage/release/current/amd64/iso-cd/MD5SUMS
-md5sum "debian-${deb_ver}-amd64-netinst.iso"
+wget http://cdimage.debian.org/cdimage/release/current/amd64/iso-cd/SHA256SUMS
+sha256sum "debian-${deb_ver}-amd64-netinst.iso"
 ```
 
 Create the storage devices:
@@ -262,7 +262,7 @@ script from my [TDD Project](https://github.com/glevand/tdd-project),
 which has support for other CPU architectures:
 
 ```
-"${tdd-project}/scripts/start-qemu.sh.in" \
+"${tdd_project}/scripts/start-qemu.sh.in" \
  --efi-vars="${test_root}/efi-vars.fd" \
  --hda="${test_root}/debian.hda" \
  --cdrom="${installer_root}/debian-${deb_ver}-amd64-netinst.iso" \
@@ -314,7 +314,7 @@ Or use the
 script:
 
 ```
-"${tdd-project}/scripts/start-qemu.sh.in" \
+"${tdd_project}/scripts/start-qemu.sh.in" \
  --efi-vars="${test_root}/efi-vars.fd"
  --p9-share="${p9_share}" \
  --hda="${test_root}/debian.hda" \
