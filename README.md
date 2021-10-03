@@ -315,7 +315,7 @@ script:
 
 ```
 "${tdd_project}/scripts/start-qemu.sh.in" \
- --efi-vars="${test_root}/efi-vars.fd"
+ --efi-vars="${test_root}/efi-vars.fd" \
  --p9-share="${p9_share}" \
  --hda="${test_root}/debian.hda" \
  --hda-boot
