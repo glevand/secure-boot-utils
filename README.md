@@ -373,7 +373,7 @@ mkdir -p "${test_root}/boot"
  --efi-stub='/usr/lib/systemd/boot/efi/linuxx64.efi.stub' \
  --linux='/boot/vmlinuz-9.87.6-54-amd64' \
  --initrd='/boot/initrd.img-9.87.6-54-amd64' \
- --cmdline='root=UUID=12345678-1234-1234-1234-123456789abc' \
+ --cmdline='console=ttyS0 console=tty0 root=UUID=12345678-1234-1234-1234-123456789abc' \
  --output-file="${test_root}/boot/debian-combo.efi"
 ```
 
