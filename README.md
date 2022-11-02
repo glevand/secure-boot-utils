@@ -249,7 +249,7 @@ qemu-system-x86_64 \
   -object rng-random,filename=/dev/urandom,id=rng0 \
   -device virtio-rng-pci,rng=rng0 \
   -nic user,model=virtio-net-pci,hostfwd=tcp::20022-:22,hostname=sbu-tester \
-  -drive if=pflash,file="/usr/share/OVMF/OVMF_CODE.fd",format=raw,readonly \
+  -drive if=pflash,file="/usr/share/OVMF/OVMF_CODE.fd",format=raw,readonly=on \
   -drive if=pflash,file="${test_root}/efi-vars.fd",format=raw \
   -hda "${test_root}/debian.hda" \
   -cdrom "${installer_root}/debian-${deb_ver}-amd64-netinst.iso" \
@@ -288,8 +288,8 @@ collections.
 Once the install completes boot into the new system:
 
 ```
-P9_SHARE_ID="sbu-share"
 p9_share="${test_root}"
+export P9_SHARE_ID='sbu-share'
 
 cd "${test_root}"
 
