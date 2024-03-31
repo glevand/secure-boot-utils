@@ -91,7 +91,7 @@ program**, then **sbu-make-combo-loader** is what you are looking for. See the
 section below for more info.
 
 For more info on the systemd bootloader stub see the
-[systemd Boot Loader Specification](https://systemd.io/BOOT_LOADER_SPECIFICATION).
+[systemd Boot Loader Specification](https://uapi-group.org/specifications/specs/boot_loader_specification).
 
 ### Usage
 
